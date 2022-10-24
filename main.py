@@ -88,18 +88,24 @@ async def points(ctx):
 @bot.command()
 async def rob(ctx, member:discord.Member):
     if int(dict.get(str(ctx.message.author.id))) < int(100):
-        await ctx.send('I didnt know it was possible to be too broke to rob someone :skull: x 7.')
+            embed=discord.Embed(title=":spy: Rob | You attempt to rob " + member.name, description="I didnt know it was possible to be too broke to rob someone :skull: :regional_indicator_x: :seven:.", color=0x00ff00)
+            await ctx.send(embed=embed)
     elif int(dict.get(str(member.id))) < 100:
-        await ctx.send('Theyre too poor to rob :skull: x 7.')
+            embed=discord.Embed(title=":spy: Rob | You attempt to rob " + member.name, description="They were too broke to get robbed :skull: :regional_indicator_x: :seven:.", color=0x00ff00)
+            await ctx.send(embed=embed)
     else:
         if random.randint(1, 10) == 1:
             dict[str(ctx.message.author.id)] = str(int(dict[str(ctx.message.author.id)]) + 100)
             dict[str(member.id)] = str(int(dict[str(member.id)]) - 100)
-            await ctx.send('Congrats, you robbed a man for 100 points :neutral_face:.')
+            embed=discord.Embed(title=":spy: Rob | You attempt to rob " + member.name, description="You ran their pockets. Fr ong, just like that :neutral_face:.", color=0x00ff00)
+            embed.add_field(name="Gained", value="100", inline=True)
+            await ctx.send(embed=embed)
         else:
             dict[str(ctx.message.author.id)] = str(int(dict[str(ctx.message.author.id)]) - 100)
             dict[str(member.id)] = str(int(dict[str(member.id)]) + 100)
-            await ctx.send('Bruh, you got your ass kicked, and lost 100 bones :skull: x 7.')
+            embed=discord.Embed(title=":spy: Rob | You attempt to rob " + member.name, description="You got caught lackin and got your cheeks clapped :skull: :regional_indicator_x: :seven:.", color=0xff0000)
+            embed.add_field(name="Lost", value="100", inline=True)
+            await ctx.send(embed=embed)
     writeToCSV()
 
 @bot.command()
@@ -135,38 +141,52 @@ async def bet(ctx, yesOrNo, points):
     global activeBetters
     global yesPoints
     global noPoints
-    #if ctx.message.author != betStarter:
-    if int(points) < 1:
-        await ctx.send('Aint no way you this broke :skull: x 7')
-    elif int(dict.get(str(ctx.message.author.id))) < int(points):
-        await ctx.send('You do not have enough points. You currently have: ' + str(dict[str(ctx.message.author.id)]) + ' points.')
-    elif str(yesOrNo).lower() != 'yes' and str(yesOrNo).lower() != 'no':
-        await ctx.send('Not a valid choice. Please select either yes or no.')
-    elif ctx.message.author.id not in activeBetters:
-        activeBetters[ctx.message.author.id] = [yesOrNo, points]
-        await ctx.send('Adding you to the betting pool...')
-        if str(yesOrNo) == 'yes':
-            betYes.append(ctx.message.author.id)
-            yesPoints += int(points)
+    embed=discord.Embed(title=":coin: Placing Bet", description="Placing your bet...", color=0xffffff)
+    
+    if ctx.message.author != betStarter:
+        if not betActive or betClosed:
+            embed.add_field(name="Error", value="There are currently no open bets.", inline=True)
+        elif int(points) < 1:
+            embed.add_field(name="Error", value="Aint no way you this broke :skull: x 7", inline=True)
+        elif int(dict.get(str(ctx.message.author.id))) < int(points):
+            embed.add_field(name="Error", value="You don't have enough points. You currently have " + str(dict[str(ctx.message.author.id)]) + " points." , inline=True)
+        elif str(yesOrNo).lower() != 'yes' and str(yesOrNo).lower() != 'no':
+            embed.add_field(name="Error", value="Not a valid choice, please select either yes or no.", inline=True)
+        elif ctx.message.author.id not in activeBetters:
+            activeBetters[ctx.message.author.id] = [yesOrNo, points]
+            embed.add_field(name="Bet Choice", value=str(yesOrNo), inline=True)
+            embed.add_field(name="Points Bet", value=str(points), inline=True)
+            if str(yesOrNo) == 'yes':
+                betYes.append(ctx.message.author.id)
+                yesPoints += int(points)
+            else:
+                betNo.append(ctx.message.author.id)
+                noPoints += int(points)
         else:
-            betNo.append(ctx.message.author.id)
-            noPoints += int(points)
+            embed.add_field(name="Error", value="You've already placed a bet.", inline=True)
     else:
-        await ctx.send('You\'ve already placed a bet.')
-    #else:
-        #await ctx.send("As the starter and moderator of the bet, you may not place a bet.")
+        embed.add_field(name="Error", value="As the starter and moderator of the bet, you may not place a bet.", inline=True)
+    await ctx.send(embed = embed)
 
 
 @bot.command()
 async def checkbet(ctx):
+    embed=discord.Embed(title=":coin: Bet Info | " + ctx.message.author.name, color=0x00ffb3)
+
     if ctx.message.author.id not in activeBetters:
-        await ctx.send('You are not in the betting pool.')
+        embed.add_field(name="Error", value="You're not in the betting pool.", inline=False)
     else:
-        await ctx.send('Prediction: ' + str(activeBetters.get(ctx.message.author.id)[0] + " | Points Bet: " + str(activeBetters.get(ctx.message.author.id)[1])))
+        embed.add_field(name="Prediction", value=str(activeBetters.get(ctx.message.author.id)[0]), inline=False)
+        embed.add_field(name="Points Bet", value=str(activeBetters.get(ctx.message.author.id)[1]), inline=False)
+    await ctx.send(embed = embed)
 
 @bot.command()
 async def prizepool(ctx):
-    await ctx.send("The total prize pool is: " + str(yesPoints + noPoints) + " points.")
+    embed=discord.Embed(title=":coin: Prize Pool", color=0x00ffb3)
+    embed.add_field(name="Points for Yes", value=str(yesPoints), inline=False)
+    embed.add_field(name="Points for No", value=str(noPoints), inline=False)
+    embed.add_field(name="Total Points", value=str(yesPoints + noPoints), inline=False)
+    await ctx.send(embed=embed)
 
 def createDictionary():
     with open('points.csv', mode = 'r') as inFile:
@@ -184,17 +204,22 @@ def writeToCSV():
             writer.writerow(row)
 
 @bot.command()
-async def closebet(ctx, result):
+async def closebet(ctx):
     global betStarter
     global betActive
     global betClosed
     if betActive and not betClosed:
         if ctx.message.author == betStarter:
             betClosed = True
+            embed=discord.Embed(title=":lock: Closing Bets", description="New bets cannot be placed anymore.", color=0xff0000)
+            await ctx.send(embed = embed)
         else:
             await ctx.send('You are not the bet starter.')
+            embed=discord.Embed(title=":lock: Closing Bets", description="You are not the bet starter.", color=0xff0000)
+            await ctx.send(embed = embed)
     else:
-        await ctx.send('There is no bet currently active.')
+        embed=discord.Embed(title=":lock: Closing Bets", description="There are no open bets.", color=0xff0000)
+        await ctx.send(embed = embed)
 
 @bot.command()
 async def endbet(ctx, result):
@@ -209,9 +234,11 @@ async def endbet(ctx, result):
             betActive = False
             betClosed = False
         else:
-            await ctx.send('You are not the bet starter.')
+            embed=discord.Embed(title=":no_entry: End Bet Error", description="You are not the bet starter.", color=0xff0000)
+            await ctx.send(embed = embed)
     else:
-        await ctx.send('There is no bet currently active.')
+        embed=discord.Embed(title=":no_entry: End Bet Error", description="There are not open bets.", color=0xff0000)
+        await ctx.send(embed = embed)
         
 
 def calculateWeights():
