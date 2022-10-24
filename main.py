@@ -45,7 +45,7 @@ async def freepoints():
             continue
         else:
             if str(member.id) in dict:
-                #dict[str(member.id)] = str(int(dict[str(member.id)]) + 100)
+                dict[str(member.id)] = str(int(dict[str(member.id)]) + 100)
                 writeToCSV()
     
 @bot.command()
@@ -240,6 +240,7 @@ async def calculateDistributions(ctx, result):
         for user2 in betYes:
             dict[str(user2)] = str(int(dict[str(user2)]) - int(activeBetters.get(user2)[1]))
             embed2.add_field(name=bot.get_guild(551586327758372884).get_member(int(user2)).name, value=str(int(float(int(activeBetters.get(user2)[1])))), inline=False)
+
     await ctx.send(embed = embed1)
     await ctx.send(embed = embed2)
     writeToCSV()
